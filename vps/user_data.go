@@ -106,6 +106,7 @@ func (s *Service) UpdateUserData(ctx context.Context, id int64, data UpdateUserD
 }
 
 // DeleteUserData removes the User Data snippet with the given ID.
+// Returns ErrNotFound if the API has no such snippet.
 func (s *Service) DeleteUserData(ctx context.Context, id int64) error {
 	url := fmt.Sprintf("/vps/user-data/%d", id)
 

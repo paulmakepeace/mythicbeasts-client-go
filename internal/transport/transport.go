@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"slices"
 	"time"
 )
+
+// ErrNotFound indicates the API reported that the target resource does not exist.
+var ErrNotFound = errors.New("resource not found")
 
 // Requester provides the shared transport operations used by service clients.
 type Requester interface {

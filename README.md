@@ -66,9 +66,9 @@ if err != nil {
 
 You can manage your API tokens on [the Mythic Beasts site](https://www.mythic-beasts.com/customer/api-users).
 
-### Idempotent deletion
+### Deleting an absent server
 
-The deletion of VPS or Pi servers counts a 404 as a success.
+Deleting a VPS or Pi that the API does not have returns `ErrNotFound`. Callers that treat an already-absent server as success match with `errors.Is(err, vps.ErrNotFound)`.
 
 ## Versioning
 

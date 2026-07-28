@@ -12,10 +12,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/paultibbetts/mythicbeasts-client-go/internal/transport"
 	"github.com/paultibbetts/mythicbeasts-client-go/pi"
 	"github.com/paultibbetts/mythicbeasts-client-go/proxy"
 	"github.com/paultibbetts/mythicbeasts-client-go/vps"
 )
+
+// ErrNotFound indicates the API reported that the target resource does not exist.
+// It is the same value as vps.ErrNotFound and pi.ErrNotFound.
+var ErrNotFound = transport.ErrNotFound
 
 // AuthURL is the URL of the auth service to sign in.
 const AuthURL string = "https://auth.mythic-beasts.com"
@@ -237,7 +242,7 @@ func (c *Client) Get(ctx context.Context, baseURL, endpoint string) (*http.Respo
 }
 
 // Delete issues a DELETE request to the endpoint, relative to the baseURL.
-// It accepts a 404 as a successful deletion.
+// Returns ErrNotFound if the API responds 404.
 func (c *Client) Delete(ctx context.Context, baseURL, endpoint string) error {
 	res, err := c.DoRequest(ctx, http.MethodDelete, baseURL, endpoint, nil)
 	if err != nil {
@@ -250,8 +255,10 @@ func (c *Client) Delete(ctx context.Context, baseURL, endpoint string) error {
 	}
 
 	switch res.StatusCode {
-	case http.StatusNoContent, http.StatusOK, http.StatusAccepted, http.StatusNotFound:
+	case http.StatusNoContent, http.StatusOK, http.StatusAccepted:
 		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("%w: DELETE %s: %s", ErrNotFound, endpoint, truncateBody(body))
 	default:
 		return fmt.Errorf("unexpected status %d: %s", res.StatusCode, truncateBody(body))
 	}
