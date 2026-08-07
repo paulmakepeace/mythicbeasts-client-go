@@ -66,6 +66,28 @@ if err != nil {
 
 You can manage your API tokens on [the Mythic Beasts site](https://www.mythic-beasts.com/customer/api-users).
 
+### Making a VPS dormant
+
+A dormant VPS keeps its storage and IP addresses but is otherwise decommissioned. The transition is a forced power off and discards whatever is in RAM, so shut a running server down gracefully first:
+
+```go
+if _, err := c.VPS().ShutdownWithGrace(ctx, "example-vps", 0); err != nil {
+	// handle error
+}
+
+if _, err := c.VPS().MakeDormant(ctx, "example-vps"); err != nil {
+	// handle error
+}
+```
+
+`ShutdownWithGrace` requests an ACPI shutdown and waits `vps.DefaultShutdownGracePeriod` when the grace period is zero. Reactivating a dormant server needs a product code from `GetProducts`:
+
+```go
+if _, err := c.VPS().Reactivate(ctx, "example-vps", "VPSX1"); err != nil {
+	// handle error
+}
+```
+
 ### Idempotent deletion
 
 The deletion of VPS or Pi servers counts a 404 as a success.

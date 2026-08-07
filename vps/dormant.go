@@ -20,6 +20,9 @@ type DormantResponse struct {
 }
 
 // MakeDormant decommissions the VPS but retains its storage and IP addresses.
+// The transition is a forced power off and discards whatever is in RAM, so a
+// running server should be shut down gracefully first with ShutdownWithGrace
+// or SetPower using PowerActionShutdown.
 // Returns ErrEmptyIdentifier if the identifier is blank.
 func (s *Service) MakeDormant(ctx context.Context, identifier string) (DormantResponse, error) {
 	if strings.TrimSpace(identifier) == "" {
