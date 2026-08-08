@@ -142,8 +142,13 @@ type CreateRequest struct {
 
 // Create provisions a new Pi server with the given identifier and
 // request parameters. It blocks until the server becomes live or the timeout
-// is reached. Returns ErrIdentifierConflict if the identifier is already in use.
+// is reached. Returns ErrEmptyIdentifier if the identifier is blank, and
+// ErrIdentifierConflict if the identifier is already in use.
 func (s *Service) Create(ctx context.Context, identifier string, server CreateRequest) (*Server, error) {
+	if strings.TrimSpace(identifier) == "" {
+		return nil, ErrEmptyIdentifier
+	}
+
 	requestURL := fmt.Sprintf("/pi/servers/%s", identifier)
 
 	requestJSON, err := json.Marshal(server)

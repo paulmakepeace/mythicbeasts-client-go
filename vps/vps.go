@@ -127,8 +127,13 @@ func Bool(v bool) *bool { return &v }
 //
 // It blocks until the server becomes live or the timeout
 // is reached.
-// Returns ErrIdentifierConflict if the identifier is already in use.
+// Returns ErrEmptyIdentifier if the identifier is blank, and
+// ErrIdentifierConflict if the identifier is already in use.
 func (s *Service) Create(ctx context.Context, identifier string, server CreateRequest) (Server, error) {
+	if strings.TrimSpace(identifier) == "" {
+		return Server{}, ErrEmptyIdentifier
+	}
+
 	requestURL := fmt.Sprintf("/vps/servers/%s", identifier)
 
 	requestJson, err := json.Marshal(server)

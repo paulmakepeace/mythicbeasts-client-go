@@ -388,6 +388,17 @@ func TestCreateRequest_Marshal_IncludesExplicitOptionalFields(t *testing.T) {
 	}
 }
 
+func TestCreate_EmptyIdentifier(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if _, err := c.VPS().Create(testContext(), " ", vpsapi.CreateRequest{}); !errors.Is(err, vpsapi.ErrEmptyIdentifier) {
+		t.Fatalf("want ErrEmptyIdentifier, got %v", err)
+	}
+}
+
 func TestUpdate(t *testing.T) {
 	t.Parallel()
 

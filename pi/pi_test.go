@@ -322,6 +322,17 @@ func TestRaspberryPis_Create_Success(t *testing.T) {
 	}
 }
 
+func TestRaspberryPis_Create_EmptyIdentifier(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if _, err := c.Pi().Create(testContext(), " ", piapi.CreateRequest{}); !errors.Is(err, piapi.ErrEmptyIdentifier) {
+		t.Fatalf("want ErrEmptyIdentifier, got %v", err)
+	}
+}
+
 func TestRaspberryPis_Create_Conflict(t *testing.T) {
 	t.Parallel()
 	mux := http.NewServeMux()
