@@ -97,7 +97,7 @@ func (s *Service) GetEndpoints(ctx context.Context, domain, hostname, address, s
 		return nil, false, err
 	}
 
-	res, err := s.BaseService.Get(ctx, endpoint)
+	res, err := s.GetRaw(ctx, endpoint)
 	if err != nil {
 		return nil, false, err
 	}

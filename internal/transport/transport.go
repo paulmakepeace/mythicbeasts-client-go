@@ -42,13 +42,17 @@ func (s BaseService) Do(req *http.Request) (*http.Response, error) {
 	return s.Client.Do(req)
 }
 
-// Get issues a GET request relative to the service base URL.
-func (s BaseService) Get(ctx context.Context, endpoint string) (*http.Response, error) {
+// GetRaw issues a GET request relative to the service base URL and
+// returns the raw response. Named so that embedding services do not
+// shadow it with their own resource-taking Get.
+func (s BaseService) GetRaw(ctx context.Context, endpoint string) (*http.Response, error) {
 	return s.Client.Get(ctx, s.BaseURL, endpoint)
 }
 
-// Delete issues a DELETE request relative to the service base URL.
-func (s BaseService) Delete(ctx context.Context, endpoint string) error {
+// DeleteRaw issues a DELETE request relative to the service base URL.
+// Named so that embedding services do not shadow it with their own
+// resource-taking Delete.
+func (s BaseService) DeleteRaw(ctx context.Context, endpoint string) error {
 	return s.Client.Delete(ctx, s.BaseURL, endpoint)
 }
 
@@ -65,7 +69,7 @@ func (s BaseService) PollProvisioning(ctx context.Context, pollURL string, timeo
 // GetJSON issues a GET and unmarshals the JSON response.
 // If allowedStatus is provided it is validated before unmarshalling.
 func (s BaseService) GetJSON(ctx context.Context, endpoint string, out any, allowedStatus ...int) (*http.Response, []byte, error) {
-	res, err := s.Get(ctx, endpoint)
+	res, err := s.GetRaw(ctx, endpoint)
 	if err != nil {
 		return nil, nil, err
 	}

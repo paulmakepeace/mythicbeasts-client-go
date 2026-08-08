@@ -109,7 +109,7 @@ func (s *Service) UpdateUserData(ctx context.Context, id int64, data UpdateUserD
 func (s *Service) DeleteUserData(ctx context.Context, id int64) error {
 	url := fmt.Sprintf("/vps/user-data/%d", id)
 
-	return s.BaseService.Delete(ctx, url)
+	return s.DeleteRaw(ctx, url)
 }
 
 func parseUserData(raw map[string]any, requireData bool) (UserData, error) {
