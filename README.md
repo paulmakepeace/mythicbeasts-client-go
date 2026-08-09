@@ -66,6 +66,35 @@ if err != nil {
 
 You can manage your API tokens on [the Mythic Beasts site](https://www.mythic-beasts.com/customer/api-users).
 
+### Server status values
+
+`Server.Status` carries the power state. The API documents no set of values, so
+this is what the client has observed and it may not be exhaustive:
+
+| `Status` | Meaning |
+| --- | --- |
+| `running` | The server is up |
+| `paused` | A transient of about two seconds during power-on |
+| `shut down` | Powered off, whether dormant or freshly stopped |
+
+Note the space in `shut down`. The `shutdown` power action
+(`vps.PowerActionShutdown`) has no space: one is the action you send, the other
+the state that comes back, and they are different strings.
+
+Two rules follow from the transient. To wait for a shutdown, wait for `Status`
+to leave `running`. To wait for a boot, wait for `running` itself rather than
+for the absence of anything else, since `paused` is a server on its way up.
+
+`running` appears about ten seconds before the server accepts connections, so a
+first connect after a power-on needs retrying whatever the API says.
+
+### Waiting after a power request
+
+`RebootWithGrace` and `ShutdownWithGrace` pause for a fixed period, two minutes
+by default, and that pause is unconditional: it runs to completion however
+quickly the server stops or comes back, and neither call checks. To know that a
+server actually stopped, poll `Get` until `Status` leaves `running`.
+
 ### Making a VPS dormant
 
 A dormant VPS keeps its storage and IP addresses but is otherwise decommissioned. The transition is a forced power off and discards whatever is in RAM, so shut a running server down gracefully first:
