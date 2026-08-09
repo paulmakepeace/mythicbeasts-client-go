@@ -19,7 +19,7 @@ mythicbeasts-client-go is a Go client for the Mythic Beasts [Raspberry Pi](https
 > To use this fork, keep the upstream import path and add:
 >
 > ```
-> replace github.com/paultibbetts/mythicbeasts-client-go => github.com/paulmakepeace/mythicbeasts-client-go v0.5.0-fork.1
+> replace github.com/paultibbetts/mythicbeasts-client-go => github.com/paulmakepeace/mythicbeasts-client-go v0.5.0-fork.2
 > ```
 
 ## Installation
