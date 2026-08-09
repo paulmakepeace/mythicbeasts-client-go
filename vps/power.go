@@ -17,9 +17,20 @@ const (
 	PowerActionOff      PowerAction = "power-off"
 	PowerActionShutdown PowerAction = "shutdown"
 
-	// DefaultRebootGracePeriod is the default wait time after a reboot request.
+	// DefaultRebootGracePeriod is the default wait time after a reboot
+	// request. It is a fixed two minute pause, not a check: nothing about
+	// it observes the server, and it elapses in full however quickly the
+	// reboot finishes.
 	DefaultRebootGracePeriod = 2 * time.Minute
-	// DefaultShutdownGracePeriod is the default wait time after a shutdown request.
+
+	// DefaultShutdownGracePeriod is the default wait time after a shutdown
+	// request. It is a fixed two minute pause on the same terms.
+	//
+	// A caller that needs to know the server actually stopped, rather than
+	// to wait a while, can poll Get until Status leaves "running". The API
+	// reflects a completed shutdown within a few seconds of the guest
+	// halting, while how long the guest takes to halt depends on what it
+	// is running.
 	DefaultShutdownGracePeriod = 2 * time.Minute
 )
 
@@ -66,7 +77,11 @@ func (s *Service) Reboot(ctx context.Context, identifier string) (RebootResponse
 }
 
 // RebootWithGrace initiates an ACPI reboot and waits for a grace period.
-// If gracePeriod <= 0, DefaultRebootGracePeriod is used.
+// If gracePeriod <= 0, DefaultRebootGracePeriod is used, which pauses for
+// two minutes.
+//
+// The wait is unconditional: it does not end early when the server comes
+// back.
 func (s *Service) RebootWithGrace(ctx context.Context, identifier string, gracePeriod time.Duration) (RebootResponse, error) {
 	resp, err := s.Reboot(ctx, identifier)
 	if err != nil {
@@ -101,7 +116,11 @@ func (s *Service) SetPower(ctx context.Context, identifier string, action PowerA
 }
 
 // ShutdownWithGrace requests ACPI shutdown and waits for a grace period.
-// If gracePeriod <= 0, DefaultShutdownGracePeriod is used.
+// If gracePeriod <= 0, DefaultShutdownGracePeriod is used, which pauses for
+// two minutes.
+//
+// The wait is unconditional: it does not end early when the server stops,
+// and the response returned is the one from the shutdown request.
 func (s *Service) ShutdownWithGrace(ctx context.Context, identifier string, gracePeriod time.Duration) (PowerResponse, error) {
 	resp, err := s.SetPower(ctx, identifier, PowerActionShutdown)
 	if err != nil {

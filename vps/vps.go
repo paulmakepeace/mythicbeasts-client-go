@@ -13,9 +13,27 @@ import (
 
 // Server represents a provisioned VPS.
 type Server struct {
-	Identifier string      `json:"identifier"`
-	Name       string      `json:"name"`
-	Status     string      `json:"status"`
+	Identifier string `json:"identifier"`
+	Name       string `json:"name"`
+
+	// Status is the server's power state. The API documents no set of
+	// values; these are the ones this client has seen, and the list may
+	// not be exhaustive:
+	//
+	//	running     the server is up. It reads running about ten seconds
+	//	            before the server accepts connections, so a first
+	//	            connect after a power-on needs retrying.
+	//	paused      a transient of a couple of seconds during power-on.
+	//	shut down   powered off, whether dormant or freshly stopped. Note
+	//	            the space, which PowerActionShutdown ("shutdown") does
+	//	            not have: one is the action to send, the other the
+	//	            state that comes back, and they are different strings.
+	//
+	// To wait for a shutdown, wait for Status to leave "running". To wait
+	// for a boot, wait for "running" itself rather than for the absence of
+	// anything else, because "paused" is a server on its way up.
+	Status string `json:"status"`
+
 	HostServer string      `json:"host_server"`
 	Zone       ServerZone  `json:"zone"`
 	Product    string      `json:"product"`
