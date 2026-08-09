@@ -3,6 +3,7 @@ package mythicbeasts
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -246,6 +247,27 @@ func TestDelete(t *testing.T) {
 	c, _ := NewClient("", "")
 	if err := c.Delete(context.Background(), s.URL, "/"); err != nil {
 		t.Fatalf("delete error: %v", err)
+	}
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	t.Parallel()
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("no such server"))
+	}))
+	t.Cleanup(s.Close)
+
+	c, _ := NewClient("", "")
+	err := c.Delete(context.Background(), s.URL, "/vps/servers/missing")
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "/vps/servers/missing") {
+		t.Fatalf("want the path in %q", err)
+	}
+	if !strings.Contains(err.Error(), "no such server") {
+		t.Fatalf("want the body in %q", err)
 	}
 }
 

@@ -383,8 +383,8 @@ func (s *Service) Update(ctx context.Context, identifier string, req UpdateReque
 
 // Delete removes a provisioned VPS.
 //
-// Returns ErrEmptyIdentifier if the identifier is blank.
-// Considers a 404 as a successful deletion.
+// Returns ErrEmptyIdentifier if the identifier is blank, and ErrNotFound if
+// the API has no such server.
 func (s *Service) Delete(ctx context.Context, identifier string) error {
 	if strings.TrimSpace(identifier) == "" {
 		return ErrEmptyIdentifier

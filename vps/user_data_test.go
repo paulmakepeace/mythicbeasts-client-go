@@ -426,3 +426,36 @@ func TestUserData_Update_UnexpectedStatus(t *testing.T) {
 		t.Fatalf("err=%q want %q", err.Error(), want)
 	}
 }
+
+func TestUserData_Delete(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/user-data/1", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Fatalf("method=%s, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if err := c.VPS().DeleteUserData(testContext(), 1); err != nil {
+		t.Fatalf("DeleteUserData: %v", err)
+	}
+}
+
+func TestUserData_Delete_404(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/user-data/1", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if err := c.VPS().DeleteUserData(testContext(), 1); !errors.Is(err, vpsapi.ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
+	}
+}
