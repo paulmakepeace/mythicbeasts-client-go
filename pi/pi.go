@@ -38,7 +38,7 @@ type Model struct {
 // ListModels retrieves the list of available Pi models
 // that can be provisioned by Mythic Beasts.
 func (s *Service) ListModels(ctx context.Context) ([]Model, error) {
-	res, err := s.BaseService.Get(ctx, "/pi/models")
+	res, err := s.GetRaw(ctx, "/pi/models")
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func (s *Service) Create(ctx context.Context, identifier string, server CreateRe
 		return nil, err
 	}
 
-	serverRes, err := s.BaseService.Get(ctx, serverURL)
+	serverRes, err := s.GetRaw(ctx, serverURL)
 	if err != nil {
 		return nil, err
 	}
@@ -261,5 +261,5 @@ func (s *Service) Delete(ctx context.Context, identifier string) error {
 
 	url := fmt.Sprintf("/pi/servers/%s", identifier)
 
-	return s.BaseService.Delete(ctx, url)
+	return s.DeleteRaw(ctx, url)
 }
