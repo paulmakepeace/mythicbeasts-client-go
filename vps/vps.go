@@ -35,6 +35,10 @@ type Server struct {
 	Macs       []string    `json:"macs"`
 	SSHProxy   SSHProxy    `json:"ssh_proxy"`
 	VNC        VNC         `json:"vnc"`
+
+	// UpgradeSpecs is present for non-on-demand servers with pending
+	// upgrades and is nil otherwise.
+	UpgradeSpecs *UpgradeSpecs `json:"upgrade_specs,omitempty"`
 }
 
 // ServerZone represents the Zone (datacentre) that a VPS
@@ -55,11 +59,22 @@ type ServerSpecs struct {
 	RAM        int64  `json:"ram"`
 }
 
+// UpgradeSpecs represents the specifications a VPS will have once its
+// pending upgrades are applied. Each field is set only for a pending upgrade
+// of that kind.
+type UpgradeSpecs struct {
+	DiskType string `json:"disk_type,omitempty"`
+	DiskSize int64  `json:"disk_size,omitempty"`
+	Cores    int64  `json:"cores,omitempty"`
+	RAM      int64  `json:"ram,omitempty"`
+}
+
 // SSHProxy represents the details of the
 // SSH Proxy in use by the VPS.
 type SSHProxy struct {
 	Hostname string `json:"hostname"`
 	Port     int64  `json:"port"`
+	Enabled  bool   `json:"enabled"`
 }
 
 // VNC represents VNC connection details for a provisioned VPS.
@@ -240,10 +255,19 @@ type UpdateRequest struct {
 	DiskBus    *string      `json:"disk_bus,omitempty"`
 	Tablet     *bool        `json:"tablet,omitempty"`
 
+	// SSHProxy allows IPv6-only servers to be reached from IPv4-only
+	// networks. Changing it does not require the VPS to be powered off.
+	SSHProxy *UpdateSSHProxy `json:"ssh_proxy,omitempty"`
+
 	// nullable fields with tri-state semantics for PATCH:
 	// unset (omit), set value, set null.
 	clearName     bool
 	clearISOImage bool
+}
+
+// UpdateSSHProxy represents the updatable SSH proxy settings.
+type UpdateSSHProxy struct {
+	Enabled *bool `json:"enabled,omitempty"`
 }
 
 // UpdateResponse represents the response from a VPS update request.
@@ -273,6 +297,12 @@ func (r *UpdateRequest) SetNetDevice(v string) { r.NetDevice = &v }
 
 // SetDiskBus sets the disk bus type.
 func (r *UpdateRequest) SetDiskBus(v string) { r.DiskBus = &v }
+
+// SetSSHProxyEnabled enables or disables the SSH proxy.
+func (r *UpdateRequest) SetSSHProxyEnabled(v bool) { r.SSHProxy = &UpdateSSHProxy{Enabled: &v} }
+
+// UnsetSSHProxy omits the ssh_proxy field from the PATCH body.
+func (r *UpdateRequest) UnsetSSHProxy() { r.SSHProxy = nil }
 
 // SetTablet sets tablet mode.
 func (r *UpdateRequest) SetTablet(v bool) { r.Tablet = &v }
@@ -337,6 +367,9 @@ func (r UpdateRequest) MarshalJSON() ([]byte, error) {
 	}
 	if r.Tablet != nil {
 		body["tablet"] = *r.Tablet
+	}
+	if r.SSHProxy != nil {
+		body["ssh_proxy"] = r.SSHProxy
 	}
 
 	switch {
