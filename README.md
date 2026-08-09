@@ -16,6 +16,9 @@ mythicbeasts-client-go is a Go client for the Mythic Beasts [Raspberry Pi](https
 > * #5: [feat: model upgrade_specs and the ssh proxy enabled flag](https://github.com/paultibbetts/mythicbeasts-client-go/pull/5)
 > * #6: [docs: the status values the API returns, and the fixed grace pause](https://github.com/paultibbetts/mythicbeasts-client-go/pull/6)
 >
+> Maintaining it (branch layout, rebuilds, tagging) is in
+> [MAINTAINING.md](MAINTAINING.md).
+>
 > To use this fork, keep the upstream import path and add:
 >
 > ```
