@@ -184,7 +184,7 @@ func (s *Service) Create(ctx context.Context, identifier string, server CreateRe
 		return Server{}, err
 	}
 
-	serverRes, err := s.BaseService.Get(ctx, serverURL)
+	serverRes, err := s.GetRaw(ctx, serverURL)
 	if err != nil {
 		return Server{}, err
 	}
@@ -397,5 +397,5 @@ func (s *Service) Delete(ctx context.Context, identifier string) error {
 
 	url := fmt.Sprintf("/vps/servers/%s", identifier)
 
-	return s.BaseService.Delete(ctx, url)
+	return s.DeleteRaw(ctx, url)
 }
