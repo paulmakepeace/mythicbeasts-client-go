@@ -6,6 +6,21 @@
 
 mythicbeasts-client-go is a Go client for the Mythic Beasts [Raspberry Pi](https://www.mythic-beasts.com/support/api/raspberry-pi), [VPS](https://www.mythic-beasts.com/support/api/vps), and [Proxy](https://www.mythic-beasts.com/support/api/proxy) APIs.
 
+> [!NOTE]
+> This is a fork of [paultibbetts/mythicbeasts-client-go](https://github.com/paultibbetts/mythicbeasts-client-go) whose default `integration` branch is upstream `main` plus all open PRs:
+>
+> * #1: [feat: vps dormant support](https://github.com/paultibbetts/mythicbeasts-client-go/pull/1)
+> * #2: [fix: report a 404 from Delete as ErrNotFound](https://github.com/paultibbetts/mythicbeasts-client-go/pull/2)
+> * #3: [fix: guard Create against a blank identifier](https://github.com/paultibbetts/mythicbeasts-client-go/pull/3)
+> * #4: [refactor: rename transport helpers to GetRaw and DeleteRaw](https://github.com/paultibbetts/mythicbeasts-client-go/pull/4)
+> * #5: [feat: model upgrade_specs and the ssh proxy enabled flag](https://github.com/paultibbetts/mythicbeasts-client-go/pull/5)
+>
+> To use it, keep the upstream import path and add:
+>
+> ```
+> replace github.com/paultibbetts/mythicbeasts-client-go => github.com/paulmakepeace/mythicbeasts-client-go v0.5.0-fork.1
+> ```
+
 ## Installation
 
 ```bash
