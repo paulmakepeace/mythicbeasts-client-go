@@ -320,6 +320,82 @@ func TestGet_UnexpectedStatus(t *testing.T) {
 	}
 }
 
+// specExampleServer is the published example response for
+// GET /vps/servers/{identifier}.
+const specExampleServer = `{
+	"identifier":"c10524v123",
+	"name":"web-server-01",
+	"status":"running",
+	"host_server":"vds-cam-i",
+	"zone":{"code":"cam","name":"Cambridge, UK"},
+	"product":"VPSX8",
+	"family":"VPS-8",
+	"cpu_mode":"performance",
+	"net_device":"virtio",
+	"disk_bus":"virtio",
+	"tablet":true,
+	"price":1018,
+	"period":"on-demand",
+	"iso_image":"automated-install-config",
+	"dormant":false,
+	"boot_device":"hd",
+	"ipv4":["93.93.131.39"],
+	"ipv6":["2a00:1098:0:86:1000:6a:0:1"],
+	"specs":{"disk_type":"ssd","disk_size":10240,"cores":2,"extra_cores":4,"extra_ram":2048,"ram":2048},
+	"upgrade_specs":{"disk_type":"ssd","disk_size":20480,"cores":4,"ram":16384},
+	"macs":["54:54:00:de:32:99"],
+	"ssh_proxy":{"hostname":"sshproxy.mythic-beasts.com","port":10046,"enabled":true}
+}`
+
+func TestGet_DecodesTheDocumentedExample(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/c10524v123", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(specExampleServer))
+	})
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	v, err := c.VPS().Get(testContext(), "c10524v123")
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	if v.UpgradeSpecs == nil {
+		t.Fatalf("upgrade_specs decoded as nil")
+	}
+	if got := *v.UpgradeSpecs; got != (vpsapi.UpgradeSpecs{DiskType: "ssd", DiskSize: 20480, Cores: 4, RAM: 16384}) {
+		t.Fatalf("upgrade_specs=%+v", got)
+	}
+	if !v.SSHProxy.Enabled {
+		t.Fatalf("ssh_proxy.enabled=false, want true")
+	}
+	if v.SSHProxy.Hostname != "sshproxy.mythic-beasts.com" || v.SSHProxy.Port != 10046 {
+		t.Fatalf("ssh_proxy=%+v", v.SSHProxy)
+	}
+	if v.Specs.ExtraCores != 4 || v.Specs.RAM != 2048 {
+		t.Fatalf("specs=%+v", v.Specs)
+	}
+}
+
+func TestGet_UpgradeSpecsNilWithoutPendingUpgrade(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/my-id", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"identifier":"my-id","status":"running"}`))
+	})
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	v, err := c.VPS().Get(testContext(), "my-id")
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if v.UpgradeSpecs != nil {
+		t.Fatalf("upgrade_specs=%+v, want nil when the API omits it", v.UpgradeSpecs)
+	}
+}
+
 func TestCreateRequest_Marshal_OmitsUnsetOptionalFields(t *testing.T) {
 	t.Parallel()
 
@@ -530,6 +606,83 @@ func TestUpdate_RequiresPoweredOff(t *testing.T) {
 		if !req.RequiresPoweredOff() {
 			t.Fatalf("expected update %d to require powered off", i)
 		}
+	}
+}
+
+func TestUpdate_SSHProxy(t *testing.T) {
+	t.Parallel()
+
+	payload := vpsapi.NewUpdateRequest()
+	payload.SetSSHProxyEnabled(true)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/my-id", func(w http.ResponseWriter, r *http.Request) {
+		var req map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode req: %v", err)
+		}
+
+		proxy, ok := req["ssh_proxy"].(map[string]any)
+		if !ok {
+			t.Fatalf("ssh_proxy=%v, want object", req["ssh_proxy"])
+		}
+		if proxy["enabled"] != true {
+			t.Fatalf("ssh_proxy.enabled=%v, want true", proxy["enabled"])
+		}
+
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(vpsapi.UpdateResponse{Message: "Operation successful"})
+	})
+
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if _, err := c.VPS().Update(testContext(), "my-id", payload); err != nil {
+		t.Fatalf("update err: %v", err)
+	}
+}
+
+func TestUpdateRequest_Marshal_SSHProxy(t *testing.T) {
+	t.Parallel()
+
+	unset := vpsapi.NewUpdateRequest()
+	body, err := json.Marshal(unset)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(body), "ssh_proxy") {
+		t.Fatalf("body=%s, want ssh_proxy omitted when unset", body)
+	}
+
+	disabled := vpsapi.NewUpdateRequest()
+	disabled.SetSSHProxyEnabled(false)
+	body, err = json.Marshal(disabled)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if got, want := string(body), `{"ssh_proxy":{"enabled":false}}`; got != want {
+		t.Fatalf("body=%s, want %s", got, want)
+	}
+
+	cleared := vpsapi.NewUpdateRequest()
+	cleared.SetSSHProxyEnabled(true)
+	cleared.UnsetSSHProxy()
+	body, err = json.Marshal(cleared)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(body), "ssh_proxy") {
+		t.Fatalf("body=%s, want ssh_proxy omitted after UnsetSSHProxy", body)
+	}
+}
+
+func TestUpdate_SSHProxyDoesNotRequirePoweredOff(t *testing.T) {
+	t.Parallel()
+
+	req := vpsapi.NewUpdateRequest()
+	req.SetSSHProxyEnabled(true)
+	if req.RequiresPoweredOff() {
+		t.Fatalf("ssh proxy update should not require powered off")
 	}
 }
 
