@@ -3,11 +3,16 @@ package vps
 import (
 	"errors"
 	"fmt"
+
+	"github.com/paultibbetts/mythicbeasts-client-go/internal/transport"
 )
 
 // ErrEmptyIdentifier is returned when an identifier is not used.
 // Identifiers are required for all VPS resources.
 var ErrEmptyIdentifier = errors.New("identifier is required")
+
+// ErrNotFound indicates the API reported that the target resource does not exist.
+var ErrNotFound = transport.ErrNotFound
 
 // ErrIdentifierConflict indicates the requested resource identifier
 // has already been used.

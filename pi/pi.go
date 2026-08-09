@@ -246,8 +246,9 @@ func (s *Service) UpdateSSHKey(ctx context.Context, identifier string, req Updat
 }
 
 // Delete removes the Pi server with the given identifier.
-// Returns ErrEmptyIdentifier if the identifier is blank.
-// Considers a 404 as a successful deletion.
+//
+// Returns ErrEmptyIdentifier if the identifier is blank, and ErrNotFound if
+// the API has no such server.
 func (s *Service) Delete(ctx context.Context, identifier string) error {
 	if strings.TrimSpace(identifier) == "" {
 		return ErrEmptyIdentifier

@@ -716,3 +716,63 @@ func TestSetPower_InvalidAction(t *testing.T) {
 		t.Fatalf("want invalid power action error, got %v", err)
 	}
 }
+
+// Delete
+
+func TestDelete(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/my-id", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Fatalf("method=%s, want DELETE", r.Method)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if err := c.VPS().Delete(testContext(), "my-id"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+}
+
+func TestDelete_404(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/missing", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	err := c.VPS().Delete(testContext(), "missing")
+	if !errors.Is(err, vpsapi.ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "/vps/servers/missing") {
+		t.Fatalf("want the path in %q", err)
+	}
+}
+
+func TestDelete_Accepted(t *testing.T) {
+	t.Parallel()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/vps/servers/my-id", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusAccepted)
+	})
+	c, srv := newTestClient(t, mux)
+	defer srv.Close()
+
+	if err := c.VPS().Delete(testContext(), "my-id"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+}
+
+func TestDelete_EmptyIdentifier(t *testing.T) {
+	t.Parallel()
+	c, _ := mythicbeasts.NewClient("", "")
+
+	if err := c.VPS().Delete(testContext(), " "); !errors.Is(err, vpsapi.ErrEmptyIdentifier) {
+		t.Fatalf("want ErrEmptyIdentifier, got %v", err)
+	}
+}

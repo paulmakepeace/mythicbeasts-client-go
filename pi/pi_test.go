@@ -498,8 +498,9 @@ func TestRaspberryPis_Delete_404(t *testing.T) {
 	c, srv := newTestClient(t, mux)
 	defer srv.Close()
 
-	if err := c.Pi().Delete(testContext(), "missing"); err != nil {
-		t.Fatalf("expected nil err despite 404, got %v", err)
+	err := c.Pi().Delete(testContext(), "missing")
+	if !errors.Is(err, piapi.ErrNotFound) {
+		t.Fatalf("want ErrNotFound, got %v", err)
 	}
 }
 

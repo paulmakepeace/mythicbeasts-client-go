@@ -88,9 +88,9 @@ if _, err := c.VPS().Reactivate(ctx, "example-vps", "VPSX1"); err != nil {
 }
 ```
 
-### Idempotent deletion
+### Deleting an absent server
 
-The deletion of VPS or Pi servers counts a 404 as a success.
+Deleting a VPS or Pi that the API does not have returns `ErrNotFound`. Callers that treat an already-absent server as success match with `errors.Is(err, vps.ErrNotFound)`.
 
 ## Versioning
 
